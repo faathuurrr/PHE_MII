@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SupplyManagement.API.DTO;
 using SupplyManagement.API.Service.Interfaces;
+using System.Security.Claims;
 
 namespace SupplyManagement.API.Controllers
 {
@@ -88,12 +89,17 @@ namespace SupplyManagement.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-        [HttpPost("{id:guid}/complete-profile")]
-        public async Task<IActionResult> CompleteProfile(Guid id, [FromBody] CompleteVendorProfileDto dto)
+        [HttpPost("complete-profile")]
+        [Authorize(Roles = "Vendor")]
+        public async Task<IActionResult> CompleteProfile([FromBody] CompleteVendorProfileDto dto)
         {
+            var companyIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(companyIdClaim, out var companyId))
+                return Unauthorized(new { message = "Token tidak valid." });
+
             try
             {
-                var result = await _vendorService.CompleteVendorProfileAsync(id, dto);
+                var result = await _vendorService.CompleteVendorProfileAsync(companyId, dto);
                 return Ok(new { message = "Profile submitted. Waiting for manager approval.", data = result });
             }
             catch (KeyNotFoundException ex)

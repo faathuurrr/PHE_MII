@@ -26,8 +26,6 @@ namespace SupplyManagement.API.DTO
         public IFormFile? Photo { get; set; }
         public string Username { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
-        public string BusinessSector { get; set; } = string.Empty;
-        public string CompanyType { get; set; } = string.Empty;
     }
 
     public class UpdateCompanyDto
@@ -56,7 +54,7 @@ namespace SupplyManagement.API.DTO
 
     public class CompleteVendorProfileDto
     {
-        public Guid CompanyId { get; set; }
+        // CompanyId diambil otomatis dari JWT Token, tidak perlu dikirim dari client
         public string BusinessSector { get; set; } = string.Empty;
         public string CompanyType { get; set; } = string.Empty;
     }

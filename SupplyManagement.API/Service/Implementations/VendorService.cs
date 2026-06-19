@@ -51,6 +51,7 @@ namespace SupplyManagement.API.Service.Implementations
             var existingUsers = await _userRepo.GetAllAsync();
             if (existingUsers.Any(u => u.Username.Equals(dto.Username, StringComparison.OrdinalIgnoreCase)))
                 throw new InvalidOperationException("Username sudah digunakan.");
+
             string photoPath = string.Empty;
             if (dto.Photo != null)
                 photoPath = await _fileService.UploadFileAsync(dto.Photo, "photos");
@@ -62,19 +63,13 @@ namespace SupplyManagement.API.Service.Implementations
                 PhoneNumber = dto.PhoneNumber,
                 PhotoPath = photoPath,
                 RegistrationStatus = RegistrationStatus.Pending,
-                VendorStatus = VendorStatus.ProfileSubmitted
+                VendorStatus = VendorStatus.NotVendor
             };
             await _companyRepo.AddAsync(company);
 
-            var profile = new VendorProfile
-            {
-                CompanyId = company.Id,
-                BusinessSector = dto.BusinessSector,
-                CompanyType = dto.CompanyType
-            };
-            await _profileRepo.AddAsync(profile);
             var user = new User
             {
+                Id = company.Id,
                 Username = dto.Username,
                 Password = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                 Role = "Vendor"
@@ -152,7 +147,7 @@ namespace SupplyManagement.API.Service.Implementations
                 throw new InvalidOperationException("Company registration is not in Pending state.");
 
             company.RegistrationStatus = isApproved ? RegistrationStatus.ApprovedByAdmin : RegistrationStatus.Rejected;
-            company.VendorStatus = isApproved ? VendorStatus.PendingProfileCompletion : company.VendorStatus;
+            company.VendorStatus = isApproved ? VendorStatus.PendingProfileCompletion : VendorStatus.Rejected;
             company.UpdatedAt = DateTime.UtcNow;
 
             _companyRepo.Update(company);
