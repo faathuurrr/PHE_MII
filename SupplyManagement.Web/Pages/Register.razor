@@ -1,0 +1,148 @@
+@page "/register"
+@layout EmptyLayout
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Vendor Registration — Supply Management</PageTitle>
+
+<div class="auth-bg">
+    <div class="poly-bg">
+        <svg class="poly-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="0,900 280,400 560,750 800,200 1100,600 1440,100 1440,900" fill="#111827" opacity="0.9" />
+            <polygon points="0,900 200,500 500,800 750,300 1050,650 1440,200 1440,900" fill="#1e293b" opacity="0.7" />
+            <polygon points="0,900 150,600 400,850 700,400 1000,700 1300,300 1440,500 1440,900" fill="#0f172a" opacity="0.8" />
+        </svg>
+        <div class="line-grid"></div>
+    </div>
+
+    <div class="auth-card-wrapper">
+        <div class="auth-card" style="max-width: 480px;">
+            <div class="auth-logo">
+                <div class="logo-box">
+                    <span class="logo-text">Supply<span class="logo-accent">MS</span></span>
+                </div>
+                <h2 class="auth-title">Vendor Registration</h2>
+                <p class="auth-subtitle">Register your company to get started</p>
+            </div>
+
+            @if (isSuccess)
+            {
+                <div class="auth-alert success">
+                    <span>✅</span> Registration submitted! Waiting for admin approval.
+                </div>
+                <div class="auth-footer" style="margin-top: 1.5rem;">
+                    <a href="/" class="auth-link">← Back to Login</a>
+                </div>
+            }
+            else
+            {
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="auth-alert">
+                        <span>⚠️</span> @errorMessage
+                    </div>
+                }
+
+                <div class="auth-form">
+                    <div class="input-group-custom">
+                        <span class="input-icon">🏢</span>
+                        <input type="text" class="auth-input" placeholder="Company Name" @bind="Name" />
+                    </div>
+                    <div class="input-group-custom">
+                        <span class="input-icon">✉️</span>
+                        <input type="email" class="auth-input" placeholder="Company Email" @bind="Email" />
+                    </div>
+                    <div class="input-group-custom">
+                        <span class="input-icon">📞</span>
+                        <input type="text" class="auth-input" placeholder="Phone Number" @bind="PhoneNumber" />
+                    </div>
+
+                    <div class="file-upload-box">
+                        <span class="upload-label">
+                            @(selectedFile == null ? "Upload Company Photo / Logo" : selectedFile.Name)
+                        </span>
+                        <InputFile OnChange="HandleFileSelected" accept=".jpg,.jpeg,.png" id="photoUpload" />
+                        <label for="photoUpload" class="file-upload-trigger">Choose File</label>
+                    </div>
+
+                    <button class="btn-signin" @onclick="HandleSubmit" disabled="@isSubmitting">
+                        @if (isSubmitting)
+                        {
+                            <span class="spinner-sm"></span>
+                            <span>Submitting...</span>
+                        }
+                        else
+                        {
+                            <span>Submit Registration</span>
+                        }
+                    </button>
+                </div>
+
+                <div class="auth-footer">
+                    <span>Already registered?</span>
+                    <a href="/" class="auth-link">Sign In</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private string Name = "";
+    private string Email = "";
+    private string PhoneNumber = "";
+    private IBrowserFile? selectedFile;
+    private bool isSubmitting = false;
+    private bool isSuccess = false;
+    private string errorMessage = "";
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (string.IsNullOrWhiteSpace(Name) || string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(PhoneNumber))
+        {
+            errorMessage = "Semua field harus diisi.";
+            return;
+        }
+
+        isSubmitting = true;
+        errorMessage = "";
+
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            content.Add(new StringContent(Name), "Name");
+            content.Add(new StringContent(Email), "Email");
+            content.Add(new StringContent(PhoneNumber), "PhoneNumber");
+
+            if (selectedFile != null)
+            {
+                var fileContent = new StreamContent(selectedFile.OpenReadStream(maxAllowedSize: 1024 * 1024 * 5));
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
+                content.Add(fileContent, "Photo", selectedFile.Name);
+            }
+
+            var response = await Http.PostAsync("/api/vendor/register", content);
+            if (response.IsSuccessStatusCode)
+            {
+                isSuccess = true;
+            }
+            else
+            {
+                errorMessage = "Gagal submit registrasi. Coba lagi.";
+            }
+        }
+        catch
+        {
+            errorMessage = "Tidak dapat menghubungi server.";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

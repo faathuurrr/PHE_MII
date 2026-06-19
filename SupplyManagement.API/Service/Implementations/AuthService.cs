@@ -23,7 +23,7 @@ namespace SupplyManagement.API.Service.Implementations
         public async Task<AuthResponseDto?> AuthenticateAsync(LoginDto loginDto)
         {
             var user = await _userRepository.GetByUsernameAsync(loginDto.Username);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
+            if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.Password))
             {
                 return null;
             }
@@ -63,7 +63,7 @@ namespace SupplyManagement.API.Service.Implementations
             var user = new User
             {
                 Username = username,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+                Password = BCrypt.Net.BCrypt.HashPassword(password),
                 Role = role
             };
 

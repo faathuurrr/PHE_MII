@@ -1,0 +1,450 @@
+/* ============================================
+   SUPPLY MANAGEMENT - DESIGN SYSTEM
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --clr-bg-dark:      #0b1120;
+    --clr-poly-1:       #111827;
+    --clr-poly-2:       #1e293b;
+    --clr-card-bg:      rgba(255, 255, 255, 0.97);
+    --clr-primary:      #4f46e5;
+    --clr-primary-hov:  #4338ca;
+    --clr-primary-glow: rgba(79, 70, 229, 0.35);
+    --clr-accent:       #6366f1;
+    --clr-text:         #1e293b;
+    --clr-muted:        #64748b;
+    --clr-border:       #e2e8f0;
+    --clr-input-bg:     #f8fafc;
+    --clr-error:        #fee2e2;
+    --clr-error-text:   #b91c1c;
+    --clr-success:      #dcfce7;
+    --clr-success-text: #15803d;
+    --radius-card:      16px;
+    --radius-input:     10px;
+    --shadow-card:      0 25px 60px rgba(0,0,0,0.4), 0 8px 20px rgba(0,0,0,0.2);
+    --transition:       all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background: var(--clr-bg-dark);
+    color: var(--clr-text);
+    height: 100%;
+}
+
+/* ============================================
+   AUTH BACKGROUND — DARK POLYGON SCENE
+   ============================================ */
+.auth-bg {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--clr-bg-dark);
+    overflow: hidden;
+}
+
+.poly-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+.poly-svg {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    inset: 0;
+}
+
+/* Subtle line grid overlay */
+.line-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(99, 102, 241, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99, 102, 241, 0.05) 1px, transparent 1px);
+    background-size: 60px 60px;
+}
+
+/* ============================================
+   AUTH CARD
+   ============================================ */
+.auth-card-wrapper {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 440px;
+    padding: 1.5rem;
+    animation: cardFadeIn 0.5s ease-out;
+}
+
+@keyframes cardFadeIn {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.auth-card {
+    background: var(--clr-card-bg);
+    border-radius: var(--radius-card);
+    padding: 2.5rem 2.25rem;
+    box-shadow: var(--shadow-card);
+    width: 100%;
+}
+
+/* ============================================
+   LOGO
+   ============================================ */
+.auth-logo {
+    text-align: center;
+    margin-bottom: 1.75rem;
+}
+
+.logo-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.logo-icon {
+    font-size: 1.75rem;
+}
+
+.logo-text {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--clr-text);
+}
+
+.logo-accent {
+    color: var(--clr-primary);
+}
+
+.auth-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--clr-text);
+    margin-bottom: 0.35rem;
+}
+
+.auth-subtitle {
+    font-size: 0.875rem;
+    color: var(--clr-muted);
+}
+
+/* ============================================
+   FORM & INPUTS
+   ============================================ */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    margin-bottom: 1.25rem;
+}
+
+.input-group-custom {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--clr-input-bg);
+    border: 1.5px solid var(--clr-border);
+    border-radius: var(--radius-input);
+    transition: var(--transition);
+    overflow: hidden;
+}
+
+.input-group-custom:focus-within {
+    border-color: var(--clr-primary);
+    box-shadow: 0 0 0 3px var(--clr-primary-glow);
+    background: #fff;
+}
+
+.input-icon {
+    padding: 0 0.75rem;
+    font-size: 1rem;
+    flex-shrink: 0;
+    user-select: none;
+}
+
+.auth-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    padding: 0.75rem 0.5rem;
+    font-size: 0.9375rem;
+    font-family: inherit;
+    color: var(--clr-text);
+}
+
+.auth-input::placeholder {
+    color: #94a3b8;
+}
+
+.toggle-password {
+    background: none;
+    border: none;
+    padding: 0 0.75rem;
+    cursor: pointer;
+    font-size: 1rem;
+    opacity: 0.7;
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+
+.toggle-password:hover { opacity: 1; }
+
+/* File upload */
+.file-upload-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--clr-input-bg);
+    border: 1.5px dashed var(--clr-border);
+    border-radius: var(--radius-input);
+    padding: 0.75rem 1rem;
+    transition: var(--transition);
+}
+
+.file-upload-box:hover {
+    border-color: var(--clr-primary);
+    background: #fff;
+}
+
+.upload-icon { font-size: 1.1rem; }
+
+.upload-label {
+    flex: 1;
+    font-size: 0.875rem;
+    color: var(--clr-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-upload-box input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+
+.file-upload-trigger {
+    background: var(--clr-primary);
+    color: #fff;
+    border-radius: 6px;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+    position: relative;
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* ============================================
+   SIGN IN BUTTON
+   ============================================ */
+.btn-signin {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.85rem;
+    background: linear-gradient(135deg, var(--clr-primary), var(--clr-accent));
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-input);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 4px 15px var(--clr-primary-glow);
+    margin-top: 0.25rem;
+}
+
+.btn-signin:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--clr-primary-hov), #4f46e5);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px var(--clr-primary-glow);
+}
+
+.btn-signin:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-signin:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
+}
+
+/* Spinner */
+.spinner-sm {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   ALERTS
+   ============================================ */
+.auth-alert {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--clr-error);
+    color: var(--clr-error-text);
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.auth-alert.success {
+    background: var(--clr-success);
+    color: var(--clr-success-text);
+}
+
+/* ============================================
+   FOOTER LINKS
+   ============================================ */
+.auth-footer {
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--clr-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+.auth-link {
+    color: var(--clr-primary);
+    font-weight: 600;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.auth-link:hover {
+    color: var(--clr-primary-hov);
+    text-decoration: underline;
+}
+
+/* ============================================
+   UTILITIES
+   ============================================ */
+h1:focus { outline: none; }
+
+a, .btn-link { color: var(--clr-primary); }
+
+.btn-primary {
+    color: #fff;
+    background-color: var(--clr-primary);
+    border-color: var(--clr-primary-hov);
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus,
+.form-control:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--clr-primary);
+}
+
+.content { padding-top: 1.1rem; }
+
+.valid.modified:not([type=checkbox]) { outline: 1px solid #22c55e; }
+.invalid { outline: 1px solid #ef4444; }
+.validation-message { color: #ef4444; font-size: 0.8rem; }
+
+/* Blazor Error UI */
+#blazor-error-ui {
+    background: #fef3c7;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0,0,0,0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}
+
+/* Loading progress */
+.loading-progress {
+    position: relative;
+    display: block;
+    width: 8rem;
+    height: 8rem;
+    margin: 20vh auto 1rem;
+}
+
+.loading-progress circle {
+    fill: none;
+    stroke: #334155;
+    stroke-width: 0.6rem;
+    transform-origin: 50% 50%;
+    transform: rotate(-90deg);
+}
+
+.loading-progress circle:last-child {
+    stroke: var(--clr-primary);
+    stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
+    transition: stroke-dasharray 0.05s ease-in-out;
+}
+
+.loading-progress-text {
+    position: absolute;
+    text-align: center;
+    font-weight: bold;
+    inset: calc(20vh + 3.25rem) 0 auto 0.2rem;
+    color: #94a3b8;
+}
+
+.loading-progress-text:after {
+    content: var(--blazor-load-percentage-text, "Loading");
+}
+
+code { color: #c02d76; }
+
+/* Blazor error boundary */
+.blazor-error-boundary {
+    padding: 1rem 1rem 1rem 3.7rem;
+    background: #b32121;
+    color: white;
+    border-radius: 8px;
+}
+
+.blazor-error-boundary::after { content: "An error has occurred." }
