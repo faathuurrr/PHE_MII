@@ -38,7 +38,7 @@
             {
                 @if (!string.IsNullOrEmpty(errorMessage))
                 {
-                    <div class="auth-alert">⚠️ @errorMessage</div>
+                    <div class="auth-alert">@errorMessage</div>
                 }
 
                 <div class="auth-form">
@@ -46,15 +46,12 @@
                     <div class="form-section-label">Company Information</div>
 
                     <div class="input-group-custom">
-                        <span class="input-icon">🏢</span>
                         <input type="text" class="auth-input" placeholder="Company Name" @bind="Name" @bind:event="oninput" />
                     </div>
                     <div class="input-group-custom">
-                        <span class="input-icon">✉️</span>
                         <input type="email" class="auth-input" placeholder="Company Email" @bind="Email" @bind:event="oninput" />
                     </div>
                     <div class="input-group-custom">
-                        <span class="input-icon">📞</span>
                         <input type="text" class="auth-input" placeholder="Phone Number" @bind="PhoneNumber" @bind:event="oninput" />
                     </div>
 
@@ -69,21 +66,18 @@
                     <!-- Section: Account -->
                     <div class="form-section-label" style="margin-top: 0.25rem;">Login Account</div>
 
-                    <div class="input-group-custom">
-                        <span class="input-icon">👤</span>
+                    <div class="input-group-custom" style="margin-top: 1.5rem;">
                         <input type="text" class="auth-input" placeholder="Username" @bind="Username" @bind:event="oninput" />
                     </div>
                     <div class="input-group-custom">
-                        <span class="input-icon">🔒</span>
                         <input type="@(showPass ? "text" : "password")" class="auth-input" placeholder="Password"
                                @bind="Password" @bind:event="oninput" />
-                        <button class="toggle-password" @onclick="() => showPass = !showPass">@(showPass ? "🙈" : "👁️")</button>
+                        <button class="toggle-password" @onclick="() => showPass = !showPass">@(showPass ? "Hide" : "Show")</button>
                     </div>
                     <div class="input-group-custom">
-                        <span class="input-icon">🔒</span>
                         <input type="@(showConfirm ? "text" : "password")" class="auth-input" placeholder="Confirm Password"
                                @bind="ConfirmPassword" @bind:event="oninput" />
-                        <button class="toggle-password" @onclick="() => showConfirm = !showConfirm">@(showConfirm ? "🙈" : "👁️")</button>
+                        <button class="toggle-password" @onclick="() => showConfirm = !showConfirm">@(showConfirm ? "Hide" : "Show")</button>
                     </div>
 
                     <button class="btn-signin" @onclick="HandleSubmit" disabled="@isSubmitting">

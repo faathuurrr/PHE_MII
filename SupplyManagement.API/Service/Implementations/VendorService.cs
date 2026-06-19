@@ -174,7 +174,7 @@ namespace SupplyManagement.API.Service.Implementations
 
         public async Task<IEnumerable<CompanyResponseDto>> GetAllCompaniesAsync()
         {
-            var companies = await _companyRepo.GetAllAsync();
+            var companies = await _companyRepo.GetAllWithProfileAsync();
             return companies.Select(MapToDto);
         }
 

@@ -21,7 +21,7 @@
     @if (isSuccess)
     {
         <div class="alert-box alert-success">
-            ✅ Profile submitted! Waiting for Logistic Manager approval.
+            Profile submitted! Waiting for Logistic Manager approval.
         </div>
         <div style="text-align:center; margin-top: 1rem;">
             <button class="btn-signin" @onclick='() => Nav.NavigateTo("/vendor")'>Go to Dashboard</button>
@@ -31,7 +31,7 @@
     {
         @if (!string.IsNullOrEmpty(errorMessage))
         {
-            <div class="alert-box alert-error">⚠️ @errorMessage</div>
+            <div class="alert-box alert-error">@errorMessage</div>
         }
 
         <div class="auth-form" style="margin-top: 1rem;">
@@ -39,7 +39,6 @@
             <div>
                 <label class="field-label">Business Sector</label>
                 <div class="input-group-custom">
-                    <span class="input-icon">🏭</span>
                     <input type="text" class="auth-input" placeholder="e.g. Oil & Gas, Construction, IT"
                            @bind="businessSector" @bind:event="oninput" />
                 </div>

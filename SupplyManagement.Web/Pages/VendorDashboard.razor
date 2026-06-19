@@ -21,7 +21,7 @@
 }
 else if (!string.IsNullOrEmpty(errorMessage))
 {
-    <div class="alert-box alert-error">⚠️ @errorMessage</div>
+    <div class="alert-box alert-error">@errorMessage</div>
 }
 else if (companyData != null)
 {
@@ -30,24 +30,25 @@ else if (companyData != null)
             <h1 class="page-title">Welcome, @companyData.Name!</h1>
             <p class="page-subtitle">Vendor Status: <span style="color:var(--clr-primary); font-weight:700;">@companyData.VendorStatus</span></p>
         </div>
+        <button class="btn-refresh" @onclick="OpenEditModal">Edit Profile</button>
     </div>
 
+    <!-- STATE: PENDING ADMIN APPROVAL -->
     @if (companyData.RegistrationStatus == "Pending")
     {
         <div class="empty-state">
-            <div class="empty-icon">⏳</div>
             <h3 style="margin-bottom:0.5rem;">Waiting for Admin Approval</h3>
-            <p>Your registration is currently under review by our Admin team.<br />Please check back later.</p>
+            <p>Your registration is currently under review by Admin.</p>
         </div>
     }
     
     else if (companyData.RegistrationStatus == "ApprovedByAdmin" && companyData.VendorStatus == "PendingProfileCompletion")
     {
         <div class="alert-box alert-warning" style="margin-bottom: 2rem;">
-            <h3>⚠️ Action Required</h3>
-            <p>Your registration has been approved by the Admin! However, you need to complete your profile before a Logistic Manager can review it.</p>
+            <h3>Action Required</h3>
+            <p>Admin has approved your registration. Please complete your profile to proceed.</p>
             <button class="btn-signin" style="max-width: 200px; margin-top: 1rem;" @onclick='() => Nav.NavigateTo("/complete-profile")'>
-                Complete Profile Now
+                Complete Profile
             </button>
         </div>
     }
@@ -55,26 +56,23 @@ else if (companyData != null)
     else if (companyData.VendorStatus == "ProfileSubmitted")
     {
         <div class="empty-state">
-            <div class="empty-icon">📬</div>
             <h3 style="margin-bottom:0.5rem;">Profile Submitted</h3>
-            <p>Your profile has been submitted and is waiting for final approval from the Logistic Manager.</p>
+            <p>Waiting for Logistic Manager approval.</p>
         </div>
     }
     
     else if (companyData.RegistrationStatus == "Rejected" || companyData.VendorStatus == "Rejected")
     {
         <div class="empty-state" style="border-color: #ef4444;">
-            <div class="empty-icon">❌</div>
             <h3 style="color:#ef4444; margin-bottom:0.5rem;">Application Rejected</h3>
-            <p>Unfortunately, your vendor application was rejected.</p>
+            <p>Your vendor application was rejected.</p>
         </div>
     }
     
     else if (companyData.VendorStatus == "ApprovedByManager")
     {
         <div class="table-card" style="padding: 2rem; text-align: center;">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">Your Company is Now Approved</div>
-            <h2 style="color: #fff; margin-bottom: 1rem;">You are an Active Vendor!</h2>
+            <h2 style="color: #fff; margin-bottom: 1rem;">Active Vendor</h2>
             <p style="color: #94a3b8; margin-bottom: 2rem;">You can now view and submit tenders for available projects.</p>
             
             <button class="btn-signin" style="max-width: 250px; margin: 0 auto;" @onclick="SimulateTenderSubmit">
@@ -82,10 +80,45 @@ else if (companyData != null)
             </button>
             @if (!string.IsNullOrEmpty(tenderMessage))
             {
-                <div style="margin-top:1rem; color:var(--clr-primary);">✅ @tenderMessage</div>
+                <div style="margin-top:1rem; color:var(--clr-primary);">@tenderMessage</div>
             }
         </div>
     }
+}
+
+@if (isEditModalOpen && companyData != null)
+{
+    <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000;">
+        <div style="background:#fff; padding:2.5rem; border-radius:12px; width:420px; max-width:90%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
+            <h3 style="color:#0f172a; margin-bottom:1.5rem; font-size:1.35rem; font-weight:700;">Edit Profile</h3>
+            
+            <div style="margin-bottom:1.25rem;">
+                <label style="display:block; margin-bottom:0.4rem; color:#475569; font-size:0.85rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Company Name</label>
+                <div class="input-group-custom">
+                    <input type="text" class="auth-input" @bind="editName" />
+                </div>
+            </div>
+            <div style="margin-bottom:1.25rem;">
+                <label style="display:block; margin-bottom:0.4rem; color:#475569; font-size:0.85rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Email</label>
+                <div class="input-group-custom">
+                    <input type="email" class="auth-input" @bind="editEmail" />
+                </div>
+            </div>
+            <div style="margin-bottom:2rem;">
+                <label style="display:block; margin-bottom:0.4rem; color:#475569; font-size:0.85rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Phone Number</label>
+                <div class="input-group-custom">
+                    <input type="text" class="auth-input" @bind="editPhone" />
+                </div>
+            </div>
+
+            <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+                <button style="padding:0.6rem 1.25rem; background:#f1f5f9; border:none; color:#475569; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.9rem;" @onclick="CloseEditModal">Cancel</button>
+                <button style="padding:0.6rem 1.25rem; background:#4f46e5; border:none; color:#fff; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.9rem; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);" @onclick="SaveEdit" disabled="@isSaving">
+                    @(isSaving ? "Saving..." : "Save Changes")
+                </button>
+            </div>
+        </div>
+    </div>
 }
 
 @code {
@@ -93,6 +126,12 @@ else if (companyData != null)
     private string errorMessage = "";
     private CompanyDto? companyData;
     private string tenderMessage = "";
+
+    private bool isEditModalOpen = false;
+    private bool isSaving = false;
+    private string editName = "";
+    private string editEmail = "";
+    private string editPhone = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -168,5 +207,59 @@ else if (companyData != null)
         tenderMessage = "";
     }
 
-    private record CompanyDto(Guid Id, string Name, string RegistrationStatus, string VendorStatus);
+    private void OpenEditModal()
+    {
+        if (companyData != null)
+        {
+            editName = companyData.Name;
+            editEmail = companyData.Email;
+            editPhone = companyData.PhoneNumber;
+            isEditModalOpen = true;
+        }
+    }
+
+    private void CloseEditModal()
+    {
+        isEditModalOpen = false;
+    }
+
+    private async Task SaveEdit()
+    {
+        if (companyData == null) return;
+        isSaving = true;
+
+        try
+        {
+            var token = await AuthState.GetTokenAsync();
+            Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            using var content = new MultipartFormDataContent();
+            content.Add(new StringContent(editName), "Name");
+            content.Add(new StringContent(editEmail), "Email");
+            content.Add(new StringContent(editPhone), "PhoneNumber");
+
+            var response = await Http.PutAsync($"/api/vendor/{companyData.Id}", content);
+            if (response.IsSuccessStatusCode)
+            {
+                CloseEditModal();
+                await LoadData();
+            }
+            else
+            {
+                var errorText = await response.Content.ReadAsStringAsync();
+                errorMessage = "Failed to update profile: " + errorText;
+                CloseEditModal();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Error updating profile: " + ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private record CompanyDto(Guid Id, string Name, string Email, string PhoneNumber, string RegistrationStatus, string VendorStatus);
 }

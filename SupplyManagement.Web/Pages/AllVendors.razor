@@ -1,0 +1,251 @@
+@page "/vendors"
+@layout MainLayout
+@inject HttpClient Http
+@inject AuthStateService AuthState
+@inject NavigationManager Nav
+@using Microsoft.AspNetCore.Authorization
+@using SupplyManagement.Web.Services
+@using System.Net.Http.Headers
+@attribute [Authorize(Roles = "Admin,LogisticManager")]
+
+<PageTitle>All Vendors — Supply Management</PageTitle>
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Vendor Directory</h1>
+        <p class="page-subtitle">List of all registered vendors and their current status.</p>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <div class="loading-state">
+        <div class="spinner-lg"></div>
+        <p>Loading vendors...</p>
+    </div>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert-box alert-error">@errorMessage</div>
+}
+else if (companies == null || !companies.Any())
+{
+    <div class="empty-state">
+        <p>No vendors found in the system.</p>
+    </div>
+}
+else
+{
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Company Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Business Sector</th>
+                    <th>Company Type</th>
+                    <th>Current Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in companies)
+                {
+                    <tr>
+                        <td><strong>@c.Name</strong></td>
+                        <td>@c.Email</td>
+                        <td>@c.PhoneNumber</td>
+                        <td>@(c.VendorProfile?.BusinessSector ?? "-")</td>
+                        <td>@(c.VendorProfile?.CompanyType ?? "-")</td>
+                        <td>
+                            <span class="badge @GetCombinedBadgeClass(c)">
+                                @GetCombinedStatusText(c)
+                            </span>
+                        </td>
+                        <td>
+                            <div style="display:flex; gap:0.5rem;">
+                                <button class="btn-signin" style="padding:0.25rem 0.5rem; font-size:0.8rem; background:#3b82f6;" @onclick="() => OpenEditModal(c)">Edit</button>
+                                <button class="btn-signin" style="padding:0.25rem 0.5rem; font-size:0.8rem; background:#ef4444;" @onclick="() => DeleteVendor(c.Id)">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<!-- EDIT MODAL -->
+@if (isEditModalOpen && editingCompany != null)
+{
+    <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000;">
+        <div style="background:#fff; padding:2.5rem; border-radius:12px; width:420px; max-width:90%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
+            <h3 style="color:#0f172a; margin-bottom:1.5rem; font-size:1.35rem; font-weight:700;">Edit Vendor Profile</h3>
+            
+            <div style="margin-bottom:1.25rem;">
+                <label style="display:block; margin-bottom:0.4rem; color:#475569; font-size:0.85rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Company Name</label>
+                <div class="input-group-custom">
+                    <input type="text" class="auth-input" @bind="editName" />
+                </div>
+            </div>
+            <div style="margin-bottom:1.25rem;">
+                <label style="display:block; margin-bottom:0.4rem; color:#475569; font-size:0.85rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Email</label>
+                <div class="input-group-custom">
+                    <input type="email" class="auth-input" @bind="editEmail" />
+                </div>
+            </div>
+            <div style="margin-bottom:2rem;">
+                <label style="display:block; margin-bottom:0.4rem; color:#475569; font-size:0.85rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Phone Number</label>
+                <div class="input-group-custom">
+                    <input type="text" class="auth-input" @bind="editPhone" />
+                </div>
+            </div>
+
+            <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+                <button style="padding:0.6rem 1.25rem; background:#f1f5f9; border:none; color:#475569; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.9rem;" @onclick="CloseEditModal">Cancel</button>
+                <button style="padding:0.6rem 1.25rem; background:#4f46e5; border:none; color:#fff; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.9rem; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);" @onclick="SaveEdit" disabled="@isSaving">
+                    @(isSaving ? "Saving..." : "Save Changes")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<CompanyDto>? companies;
+    private bool isLoading = true;
+    private string errorMessage = "";
+
+    private bool isEditModalOpen = false;
+    private bool isSaving = false;
+    private CompanyDto? editingCompany;
+    private string editName = "";
+    private string editEmail = "";
+    private string editPhone = "";
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        errorMessage = "";
+
+        try
+        {
+            var token = await AuthState.GetTokenAsync();
+            if (string.IsNullOrEmpty(token)) return;
+
+            Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            companies = await Http.GetFromJsonAsync<List<CompanyDto>>("/api/vendor");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Gagal memuat data vendor: " + ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void OpenEditModal(CompanyDto company)
+    {
+        editingCompany = company;
+        editName = company.Name;
+        editEmail = company.Email;
+        editPhone = company.PhoneNumber;
+        isEditModalOpen = true;
+    }
+
+    private void CloseEditModal()
+    {
+        isEditModalOpen = false;
+        editingCompany = null;
+    }
+
+    private async Task SaveEdit()
+    {
+        if (editingCompany == null) return;
+        isSaving = true;
+
+        try
+        {
+            var token = await AuthState.GetTokenAsync();
+            Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            using var content = new MultipartFormDataContent();
+            content.Add(new StringContent(editName), "Name");
+            content.Add(new StringContent(editEmail), "Email");
+            content.Add(new StringContent(editPhone), "PhoneNumber");
+
+            var response = await Http.PutAsync($"/api/vendor/{editingCompany.Id}", content);
+            if (response.IsSuccessStatusCode)
+            {
+                CloseEditModal();
+                await LoadData();
+            }
+            else
+            {
+                var errorText = await response.Content.ReadAsStringAsync();
+                errorMessage = "Failed to update: " + errorText;
+                CloseEditModal();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Error updating vendor: " + ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task DeleteVendor(Guid id)
+    {
+        try
+        {
+            var token = await AuthState.GetTokenAsync();
+            Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await Http.DeleteAsync($"/api/vendor/{id}");
+            if (response.IsSuccessStatusCode)
+            {
+                await LoadData();
+            }
+            else
+            {
+                var errorText = await response.Content.ReadAsStringAsync();
+                errorMessage = "Failed to delete: " + errorText;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Error deleting vendor: " + ex.Message;
+        }
+    }
+
+    private string GetCombinedStatusText(CompanyDto c)
+    {
+        if (c.RegistrationStatus == "Rejected") return "Rejected by Admin";
+        if (c.VendorStatus == "Rejected") return "Rejected by Manager";
+        if (c.RegistrationStatus == "Pending") return "Pending Admin Approval";
+        if (c.RegistrationStatus == "ApprovedByAdmin" && c.VendorStatus == "PendingProfileCompletion") return "Awaiting Profile";
+        if (c.VendorStatus == "ProfileSubmitted") return "Pending Manager Approval";
+        if (c.VendorStatus == "ApprovedByManager") return "Active Vendor";
+        return "Unknown";
+    }
+
+    private string GetCombinedBadgeClass(CompanyDto c)
+    {
+        var text = GetCombinedStatusText(c);
+        if (text.Contains("Rejected")) return "badge-rejected";
+        if (text == "Active Vendor") return "badge-approved";
+        return "badge-waiting";
+    }
+
+    private record VendorProfileDto(string BusinessSector, string CompanyType);
+    private record CompanyDto(Guid Id, string Name, string Email, string PhoneNumber, 
+        string RegistrationStatus, string VendorStatus, VendorProfileDto? VendorProfile);
+}

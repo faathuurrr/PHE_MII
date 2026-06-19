@@ -53,9 +53,17 @@ namespace SupplyManagement.API.Controllers
         }
 
         [HttpPut("{id:guid}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Vendor")]
         public async Task<IActionResult> Update(Guid id, [FromForm] UpdateCompanyDto dto)
         {
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+            if (userRole == "Vendor")
+            {
+                var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (vendorIdStr != id.ToString())
+                    return Forbid();
+            }
+
             try
             {
                 var result = await _vendorService.UpdateCompanyAsync(id, dto);

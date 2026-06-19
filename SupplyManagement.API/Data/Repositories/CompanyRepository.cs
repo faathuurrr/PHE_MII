@@ -5,6 +5,7 @@ namespace SupplyManagement.API.Data.Repositories
 {
     public interface ICompanyRepository : IRepository<Company>
     {
+        Task<IEnumerable<Company>> GetAllWithProfileAsync();
         Task<Company?> GetWithProfileAsync(Guid id);
         Task<IEnumerable<Company>> GetByRegistrationStatusAsync(RegistrationStatus status);
         Task<IEnumerable<Company>> GetByVendorStatusAsync(VendorStatus status);
@@ -13,6 +14,11 @@ namespace SupplyManagement.API.Data.Repositories
     public class CompanyRepository : Repository<Company>, ICompanyRepository
     {
         public CompanyRepository(ApplicationDbContext context) : base(context) { }
+
+        public async Task<IEnumerable<Company>> GetAllWithProfileAsync()
+        {
+            return await _dbSet.Include(c => c.VendorProfile).ToListAsync();
+        }
 
         public async Task<Company?> GetWithProfileAsync(Guid id)
         {

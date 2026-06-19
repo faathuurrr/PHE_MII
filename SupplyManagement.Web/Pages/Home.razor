@@ -8,15 +8,7 @@
 <PageTitle>Login — Supply Management</PageTitle>
 
 <div class="auth-bg">
-    <div class="poly-bg">
-        <svg class="poly-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-            <polygon points="0,900 280,400 560,750 800,200 1100,600 1440,100 1440,900" fill="#111827" opacity="0.9" />
-            <polygon points="0,900 200,500 500,800 750,300 1050,650 1440,200 1440,900" fill="#1e293b" opacity="0.7" />
-            <polygon points="0,900 150,600 400,850 700,400 1000,700 1300,300 1440,500 1440,900" fill="#0f172a" opacity="0.8" />
-            <polygon points="0,700 300,300 600,600 900,100 1200,500 1440,0 1440,900 0,900" fill="#1d2a40" opacity="0.5" />
-        </svg>
-        <div class="line-grid"></div>
-    </div>
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);"></div>
 
     <div class="auth-card-wrapper">
         <div class="auth-card">
@@ -30,22 +22,20 @@
 
             @if (!string.IsNullOrEmpty(errorMessage))
             {
-                <div class="auth-alert">⚠️ @errorMessage</div>
+                <div class="auth-alert">@errorMessage</div>
             }
 
             <div class="auth-form">
                 <div class="input-group-custom">
-                    <span class="input-icon">👤</span>
                     <input type="text" class="auth-input" placeholder="Username"
                            @bind="username" @bind:event="oninput" @onkeypress="HandleKeyPress" />
                 </div>
 
                 <div class="input-group-custom">
-                    <span class="input-icon">🔒</span>
                     <input type="@(showPassword ? "text" : "password")" class="auth-input" placeholder="Password"
                            @bind="password" @bind:event="oninput" @onkeypress="HandleKeyPress" />
                     <button class="toggle-password" @onclick="() => showPassword = !showPassword">
-                        @(showPassword ? "🙈" : "👁️")
+                        @(showPassword ? "Hide" : "Show")
                     </button>
                 </div>
 

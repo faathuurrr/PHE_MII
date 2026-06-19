@@ -24,12 +24,11 @@
 }
 else if (!string.IsNullOrEmpty(errorMessage))
 {
-    <div class="alert-box alert-error">⚠️ @errorMessage</div>
+    <div class="alert-box alert-error">@errorMessage</div>
 }
 else if (companies == null || !companies.Any())
 {
     <div class="empty-state">
-        <div class="empty-icon">📭</div>
         <p>No pending vendor profiles.</p>
     </div>
 }
@@ -37,7 +36,7 @@ else
 {
     @if (!string.IsNullOrEmpty(successMessage))
     {
-        <div class="alert-box alert-success">✅ @successMessage</div>
+        <div class="alert-box alert-success">@successMessage</div>
     }
     <div class="table-card">
         <table class="data-table">
