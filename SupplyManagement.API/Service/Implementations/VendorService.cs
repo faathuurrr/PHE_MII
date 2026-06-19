@@ -9,15 +9,18 @@ namespace SupplyManagement.API.Service.Implementations
     {
         private readonly ICompanyRepository _companyRepo;
         private readonly IRepository<VendorProfile> _profileRepo;
+        private readonly IRepository<User> _userRepo;
         private readonly IFileService _fileService;
 
         public VendorService(
             ICompanyRepository companyRepo,
             IRepository<VendorProfile> profileRepo,
+            IRepository<User> userRepo,
             IFileService fileService)
         {
             _companyRepo = companyRepo;
             _profileRepo = profileRepo;
+            _userRepo = userRepo;
             _fileService = fileService;
         }
 
@@ -45,6 +48,9 @@ namespace SupplyManagement.API.Service.Implementations
 
         public async Task<CompanyResponseDto> RegisterCompanyAsync(RegisterCompanyDto dto)
         {
+            var existingUsers = await _userRepo.GetAllAsync();
+            if (existingUsers.Any(u => u.Username.Equals(dto.Username, StringComparison.OrdinalIgnoreCase)))
+                throw new InvalidOperationException("Username sudah digunakan.");
             string photoPath = string.Empty;
             if (dto.Photo != null)
                 photoPath = await _fileService.UploadFileAsync(dto.Photo, "photos");
@@ -56,10 +62,25 @@ namespace SupplyManagement.API.Service.Implementations
                 PhoneNumber = dto.PhoneNumber,
                 PhotoPath = photoPath,
                 RegistrationStatus = RegistrationStatus.Pending,
-                VendorStatus = VendorStatus.NotVendor
+                VendorStatus = VendorStatus.ProfileSubmitted
             };
-
             await _companyRepo.AddAsync(company);
+
+            var profile = new VendorProfile
+            {
+                CompanyId = company.Id,
+                BusinessSector = dto.BusinessSector,
+                CompanyType = dto.CompanyType
+            };
+            await _profileRepo.AddAsync(profile);
+            var user = new User
+            {
+                Username = dto.Username,
+                Password = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+                Role = "Vendor"
+            };
+            await _userRepo.AddAsync(user);
+
             await _companyRepo.SaveChangesAsync();
 
             return MapToDto(company);
@@ -208,7 +229,9 @@ namespace SupplyManagement.API.Service.Implementations
         public async Task<IEnumerable<CompanyResponseDto>> GetPendingVendorProfilesAsync()
         {
             var companies = await _companyRepo.GetByVendorStatusAsync(VendorStatus.ProfileSubmitted);
-            return companies.Select(MapToDto);
+            return companies
+                .Where(c => c.RegistrationStatus == RegistrationStatus.ApprovedByAdmin)
+                .Select(MapToDto);
         }
 
         public async Task SubmitTenderAsync(SubmitTenderDto dto)
