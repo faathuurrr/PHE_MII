@@ -1,0 +1,141 @@
+@page "/manager"
+@layout MainLayout
+@inject HttpClient Http
+@inject AuthStateService AuthState
+@inject NavigationManager Nav
+@using SupplyManagement.Web.Services
+@using System.Net.Http.Headers
+
+<PageTitle>Manager Dashboard — Supply Management</PageTitle>
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Vendor Profile Approval</h1>
+        <p class="page-subtitle">Review and approve submitted vendor profiles</p>
+    </div>
+    <button class="btn-refresh" @onclick="LoadData">↻ Refresh</button>
+</div>
+
+@if (isLoading)
+{
+    <div class="loading-state">
+        <div class="spinner-lg"></div>
+        <p>Loading data...</p>
+    </div>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert-box alert-error">⚠️ @errorMessage</div>
+}
+else if (companies == null || !companies.Any())
+{
+    <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>No pending vendor profiles.</p>
+    </div>
+}
+else
+{
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert-box alert-success">✅ @successMessage</div>
+    }
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Company</th>
+                    <th>Email</th>
+                    <th>Business Sector</th>
+                    <th>Company Type</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in companies)
+                {
+                    <tr>
+                        <td><strong>@c.Name</strong></td>
+                        <td>@c.Email</td>
+                        <td>@(c.VendorProfile?.BusinessSector ?? "-")</td>
+                        <td>@(c.VendorProfile?.CompanyType ?? "-")</td>
+                        <td><span class="badge badge-waiting">@c.VendorStatus</span></td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn-approve" @onclick="() => Decide(c.Id, true)"
+                                        disabled="@processingId.Contains(c.Id)">
+                                    Approve
+                                </button>
+                                <button class="btn-reject" @onclick="() => Decide(c.Id, false)"
+                                        disabled="@processingId.Contains(c.Id)">
+                                    Reject
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<CompanyDto>? companies;
+    private HashSet<Guid> processingId = new();
+    private bool isLoading = true;
+    private string errorMessage = "";
+    private string successMessage = "";
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        errorMessage = "";
+        successMessage = "";
+
+        try
+        {
+            var token = await AuthState.GetTokenAsync();
+            Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            companies = await Http.GetFromJsonAsync<List<CompanyDto>>("/api/approval/manager/pending-profiles");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Gagal memuat data: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task Decide(Guid id, bool approve)
+    {
+        processingId.Add(id);
+        try
+        {
+            var token = await AuthState.GetTokenAsync();
+            Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var resp = await Http.PostAsync($"/api/approval/manager/approve/{id}?approve={approve}", null);
+            if (resp.IsSuccessStatusCode)
+            {
+                successMessage = approve ? "Vendor profile approved! Vendor is now active." : "Profile rejected. Company can re-submit.";
+                await LoadData();
+            }
+            else
+            {
+                errorMessage = "Gagal memproses keputusan.";
+            }
+        }
+        finally
+        {
+            processingId.Remove(id);
+        }
+    }
+
+    private record VendorProfileDto(string BusinessSector, string CompanyType);
+    private record CompanyDto(Guid Id, string Name, string Email,
+        string VendorStatus, VendorProfileDto? VendorProfile);
+}

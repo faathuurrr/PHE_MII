@@ -2,27 +2,24 @@
 @layout EmptyLayout
 @inject HttpClient Http
 @inject NavigationManager Nav
+@inject AuthStateService AuthState
+@using SupplyManagement.Web.Services
 
 <PageTitle>Login — Supply Management</PageTitle>
 
 <div class="auth-bg">
-    <!-- Animated polygon shapes -->
     <div class="poly-bg">
         <svg class="poly-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
             <polygon points="0,900 280,400 560,750 800,200 1100,600 1440,100 1440,900" fill="#111827" opacity="0.9" />
             <polygon points="0,900 200,500 500,800 750,300 1050,650 1440,200 1440,900" fill="#1e293b" opacity="0.7" />
             <polygon points="0,900 150,600 400,850 700,400 1000,700 1300,300 1440,500 1440,900" fill="#0f172a" opacity="0.8" />
             <polygon points="0,700 300,300 600,600 900,100 1200,500 1440,0 1440,900 0,900" fill="#1d2a40" opacity="0.5" />
-            <polygon points="0,500 200,200 500,400 800,50 1100,400 1440,150 1440,900 0,900" fill="#243048" opacity="0.4" />
         </svg>
-        <!-- Line grid overlay -->
         <div class="line-grid"></div>
     </div>
 
-    <!-- Login Card -->
     <div class="auth-card-wrapper">
         <div class="auth-card">
-            <!-- Logo -->
             <div class="auth-logo">
                 <div class="logo-box">
                     <span class="logo-text">Supply<span class="logo-accent">MS</span></span>
@@ -33,30 +30,20 @@
 
             @if (!string.IsNullOrEmpty(errorMessage))
             {
-                <div class="auth-alert">
-                    <span>⚠️</span> @errorMessage
-                </div>
+                <div class="auth-alert">⚠️ @errorMessage</div>
             }
 
             <div class="auth-form">
                 <div class="input-group-custom">
                     <span class="input-icon">👤</span>
-                    <input type="text"
-                           class="auth-input"
-                           placeholder="Username"
-                           @bind="username"
-                           @bind:event="oninput"
-                           @onkeypress="HandleKeyPress" />
+                    <input type="text" class="auth-input" placeholder="Username"
+                           @bind="username" @bind:event="oninput" @onkeypress="HandleKeyPress" />
                 </div>
 
                 <div class="input-group-custom">
                     <span class="input-icon">🔒</span>
-                    <input type="@(showPassword ? "text" : "password")"
-                           class="auth-input"
-                           placeholder="Password"
-                           @bind="password"
-                           @bind:event="oninput"
-                           @onkeypress="HandleKeyPress" />
+                    <input type="@(showPassword ? "text" : "password")" class="auth-input" placeholder="Password"
+                           @bind="password" @bind:event="oninput" @onkeypress="HandleKeyPress" />
                     <button class="toggle-password" @onclick="() => showPassword = !showPassword">
                         @(showPassword ? "🙈" : "👁️")
                     </button>
@@ -90,6 +77,15 @@
     private bool showPassword = false;
     private string errorMessage = "";
 
+    protected override async Task OnInitializedAsync()
+    {
+        if (await AuthState.IsLoggedInAsync())
+        {
+            var role = await AuthState.GetRoleAsync();
+            RedirectByRole(role);
+        }
+    }
+
     private async Task HandleKeyPress(KeyboardEventArgs e)
     {
         if (e.Key == "Enter") await HandleLogin();
@@ -111,8 +107,12 @@
             var response = await Http.PostAsJsonAsync("/api/auth/login", new { username, password });
             if (response.IsSuccessStatusCode)
             {
-                // TODO: Simpan token dan redirect ke dashboard
-                Nav.NavigateTo("/dashboard");
+                var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
+                if (result != null)
+                {
+                    await AuthState.SaveTokenAsync(result.Token, result.Role);
+                    RedirectByRole(result.Role);
+                }
             }
             else
             {
@@ -128,4 +128,16 @@
             isLoading = false;
         }
     }
+
+    private void RedirectByRole(string? role)
+    {
+        Nav.NavigateTo(role switch
+        {
+            "Admin"           => "/admin",
+            "LogisticManager" => "/manager",
+            _                 => "/dashboard"
+        });
+    }
+
+    private record AuthResponseDto(string Token, string Role);
 }

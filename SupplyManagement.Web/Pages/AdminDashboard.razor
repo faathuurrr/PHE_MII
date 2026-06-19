@@ -1,0 +1,140 @@
+@page "/admin"
+@layout MainLayout
+@inject HttpClient Http
+@inject AuthStateService AuthState
+@inject NavigationManager Nav
+@using SupplyManagement.Web.Services
+@using System.Net.Http.Headers
+
+<PageTitle>Admin Dashboard — Supply Management</PageTitle>
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Vendor Registration Approval</h1>
+        <p class="page-subtitle">Review and approve incoming vendor registrations</p>
+    </div>
+    <button class="btn-refresh" @onclick="LoadData">↻ Refresh</button>
+</div>
+
+@if (isLoading)
+{
+    <div class="loading-state">
+        <div class="spinner-lg"></div>
+        <p>Loading data...</p>
+    </div>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert-box alert-error">⚠️ @errorMessage</div>
+}
+else if (companies == null || !companies.Any())
+{
+    <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>No pending registrations.</p>
+    </div>
+}
+else
+{
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert-box alert-success">✅ @successMessage</div>
+    }
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Company Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Registered</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in companies)
+                {
+                    <tr>
+                        <td><strong>@c.Name</strong></td>
+                        <td>@c.Email</td>
+                        <td>@c.PhoneNumber</td>
+                        <td>@c.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
+                        <td><span class="badge badge-pending">@c.RegistrationStatus</span></td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn-approve" @onclick="() => Decide(c.Id, true)"
+                                        disabled="@processingId.Contains(c.Id)">
+                                    Approve
+                                </button>
+                                <button class="btn-reject" @onclick="() => Decide(c.Id, false)"
+                                        disabled="@processingId.Contains(c.Id)">
+                                    Reject
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<CompanyDto>? companies;
+    private HashSet<Guid> processingId = new();
+    private bool isLoading = true;
+    private string errorMessage = "";
+    private string successMessage = "";
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        errorMessage = "";
+        successMessage = "";
+
+        try
+        {
+            var token = await AuthState.GetTokenAsync();
+            Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            companies = await Http.GetFromJsonAsync<List<CompanyDto>>("/api/approval/admin/pending-registrations");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Gagal memuat data: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task Decide(Guid id, bool approve)
+    {
+        processingId.Add(id);
+        try
+        {
+            var token = await AuthState.GetTokenAsync();
+            Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var resp = await Http.PostAsync($"/api/approval/admin/approve/{id}?approve={approve}", null);
+            if (resp.IsSuccessStatusCode)
+            {
+                successMessage = approve ? "Registration approved!" : "Registration rejected.";
+                await LoadData();
+            }
+            else
+            {
+                errorMessage = "Gagal memproses keputusan.";
+            }
+        }
+        finally
+        {
+            processingId.Remove(id);
+        }
+    }
+
+    private record CompanyDto(Guid Id, string Name, string Email, string PhoneNumber,
+        string RegistrationStatus, string VendorStatus, DateTime CreatedAt);
+}
